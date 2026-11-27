@@ -1,16 +1,25 @@
 // IG06 · Booked in chat
 import { CalendarPlus, CircleCheck, MessageCircleHeart, UserRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useNotBuilt } from "@/app/flow-kit"
-import { AiMark, ApScreen, AskBar, HeroBar, PetChip, downloadIcs, heroTop, sp, url } from "../parts"
+import { useState } from "react"
+import { useFlowState, useNotBuilt, useToast } from "@/app/flow-kit"
+import { AiMark, ApScreen, AskBar, HeroBar, PetChip, SLUG, downloadIcs, heroTop, sp, url } from "../parts"
+import { defaults, nameOf, possessive } from "../state"
 
 export default function Booked() {
   const notBuilt = useNotBuilt()
+  const toast = useToast()
+  const [pet] = useFlowState(SLUG, defaults)
+  const name = nameOf(pet)
+  const [draft, setDraft] = useState("")
+  // The time held on IG05 ("10:15 AM" or "6:00 PM")
+  const [, hh, mm, ap] = /(\d+):(\d+) (AM|PM)/.exec(pet.slotTime) ?? ["", "6", "00", "PM"]
+  const hour = (Number(hh) % 12) + (ap === "PM" ? 12 : 0)
   const addToCalendar = () =>
     downloadIcs({
-      title: "Waffles: first puppy visit with Dr. Ruiz",
-      // Tue, Nov 17 · 6:00 PM (local time), as shown on the artboard
-      start: new Date(2026, 10, 17, 18, 0),
+      title: `${name}: first puppy visit with Dr. Ruiz`,
+      // Tue, Nov 17 at the held time (local time)
+      start: new Date(2026, 10, 17, hour, Number(mm)),
       minutes: 45,
       location: "Maple Grove Animal Hospital",
     })
@@ -21,12 +30,12 @@ export default function Booked() {
         <HeroBar
           back={url("chat")}
           right={
-            <Button variant="outline" size="icon" aria-label="Waffles' profile" style={{ width: 44, height: 44 }} onClick={() => notBuilt("Waffles' profile")}>
+            <Button variant="outline" size="icon" aria-label={`${possessive(name)} profile`} style={{ width: 44, height: 44 }} onClick={() => notBuilt(`${possessive(name)} profile`)}>
               <UserRound size={18} />
             </Button>
           }
         />
-        <PetChip details="Golden Retriever · 10 wks · Fremont" />
+        <PetChip />
       </section>
       <section className="ap-sheet">
         <div className="ap-scroll" style={{ gap: sp(4), paddingTop: sp(5) }}>
@@ -36,7 +45,7 @@ export default function Booked() {
           <div className="ig-ai ap-pop" style={{ transformOrigin: "left top" }}>
             <AiMark />
             <div style={{ display: "flex", flexDirection: "column", gap: sp(3), flex: 1, minWidth: 0 }}>
-              <div className="ig-bub">You're all set. Waffles is booked for her first visit.</div>
+              <div className="ig-bub">You're all set. {name} is booked for her first visit.</div>
             </div>
           </div>
           <div className="ig-hold ap-pop" style={{ marginLeft: sp(9.5) }}>
@@ -67,7 +76,7 @@ export default function Booked() {
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: sp(1), padding: sp(4) }}>
-              <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-.02em", color: "var(--surface-brand)" }}>Tue, Nov 17 · 6:00 PM</span>
+              <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-.02em", color: "var(--surface-brand)" }}>Tue, Nov 17 · {pet.slotTime}</span>
               <span className="body" style={{ color: "var(--foreground)" }}>
                 First puppy visit with Dr. Ruiz
               </span>
@@ -116,14 +125,23 @@ export default function Booked() {
                 <MessageCircleHeart size={16} />
               </span>
               <span style={{ color: "var(--foreground)" }}>
-                <b style={{ fontWeight: 600 }}>Marcus Lee</b>, the vet tech at Maple Grove, will reach out in a moment with a few details to help you get
-                Waffles ready for her visit.
+                <b style={{ fontWeight: 600 }}>Marcus Lee</b>, the vet tech at Maple Grove, will reach out in a moment with a few details to help you get {name} ready for her visit.
               </span>
             </div>
           </div>
         </div>
         <div className="ap-foot">
-          <AskBar text="Message ACME" onSend={() => notBuilt("Chatting after booking")} onSpeak={() => notBuilt("Voice input")} />
+          <AskBar
+            value={draft}
+            onChange={setDraft}
+            placeholder="Message ACME"
+            onVoiceError={toast}
+            onSend={() => {
+              if (!draft.trim()) return
+              setDraft("")
+              notBuilt("Chatting after booking")
+            }}
+          />
         </div>
       </section>
     </ApScreen>

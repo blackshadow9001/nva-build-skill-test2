@@ -2,7 +2,9 @@
 import { Link } from "react-router"
 import { ArrowRight, Cake, Check, Dna, MapPin, PawPrint, Scale, Sparkles, type LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ApScreen, BackButton, Photo, TypingDots, sp, url } from "../parts"
+import { useFlowState } from "@/app/flow-kit"
+import { ApScreen, BackButton, Photo, SLUG, TypingDots, sp, url } from "../parts"
+import { defaults, photoOf } from "../state"
 
 const readings: { icon: LucideIcon; label: string; value: string; start: number }[] = [
   { icon: PawPrint, label: "Species", value: "Dog", start: 2.4 },
@@ -20,6 +22,8 @@ const tags: { text: string; left: number; top: number; delay: string }[] = [
 ]
 
 export default function Reading() {
+  const [pet] = useFlowState(SLUG, defaults)
+  const photo = photoOf(pet)
   return (
     <ApScreen className="ig02">
       <div
@@ -70,11 +74,11 @@ export default function Reading() {
         </span>
       </header>
       <section style={{ position: "relative", height: 320, flexShrink: 0, overflow: "hidden" }}>
-        <div role="img" aria-label="Your photo: Waffles sitting in the snow" className="ap-photo" style={{ position: "absolute", inset: 0 }}>
+        <div role="img" aria-label={`Your photo: ${photo.label}`} className="ap-photo" style={{ position: "absolute", inset: 0 }}>
           <Photo
-            name="waffles-snow.jpg"
+            name={photo.name}
             alt=""
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 28%" }}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: photo.pos }}
           />
         </div>
         <div aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>

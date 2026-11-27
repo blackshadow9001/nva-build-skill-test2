@@ -1,9 +1,11 @@
 // Pieces shared by the screens of this flow only (never imported from another flow).
-import type { CSSProperties, ReactNode } from "react"
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import { Link } from "react-router"
-import { ArrowUp, ChevronLeft, Mic, PawPrint } from "lucide-react"
+import { ArrowUp, ChevronLeft, Mic, MicOff, PawPrint } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useFlowState } from "@/app/flow-kit"
+import { defaults, detailsLine, nameOf, photoOf } from "./state"
 
 export const SLUG = "flow-1g-conversational-intake"
 
@@ -117,25 +119,143 @@ export function AiMark() {
   )
 }
 
-/** The chat composer at the foot of IG05 / IG06. */
-export function AskBar({ text, onSend, onSpeak }: { text: string; onSend: () => void; onSpeak: () => void }) {
+/** The chat composer at the foot of IG05 / IG06: a real text field plus voice input. */
+export function AskBar({
+  value,
+  onChange,
+  onSend,
+  placeholder,
+  onVoiceError,
+}: {
+  value: string
+  onChange: (text: string) => void
+  onSend: () => void
+  placeholder: string
+  onVoiceError: (message: string) => void
+}) {
+  const before = useRef("")
+  const speech = useSpeechInput({
+    onText: (heard) => onChange((before.current ? before.current + " " : "") + heard),
+    onError: onVoiceError,
+  })
+  const toggleVoice = () => {
+    if (speech.listening) return speech.stop()
+    before.current = value.trim()
+    speech.start()
+  }
   return (
-    <div className="ig-ask">
-      <span className="body" style={{ flexGrow: 1, color: "var(--muted-foreground)" }}>
-        {text}
-      </span>
-      <Button variant="ghost" size="icon" aria-label="Speak" className="size-10 shrink-0 rounded-full" onClick={onSpeak}>
-        <Mic size={18} />
+    <form
+      className="ig-ask"
+      onSubmit={(e) => {
+        e.preventDefault()
+        speech.stop()
+        onSend()
+      }}
+    >
+      <input
+        className="body ig-input"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={speech.listening ? "Listening…" : placeholder}
+        aria-label="Message ACME"
+        autoComplete="off"
+        enterKeyHint="send"
+      />
+      <Button
+        type="button"
+        variant={speech.listening ? "default" : "ghost"}
+        size="icon"
+        aria-label={speech.listening ? "Stop listening" : "Speak"}
+        aria-pressed={speech.listening}
+        className={cn("size-10 shrink-0 rounded-full", speech.listening && "ig-listening")}
+        onClick={toggleVoice}
+      >
+        {speech.listening ? <MicOff size={18} /> : <Mic size={18} />}
       </Button>
-      <Button size="icon" aria-label="Send" className="size-10 shrink-0 rounded-full" onClick={onSend}>
+      <Button type="submit" size="icon" aria-label="Send" className="size-10 shrink-0 rounded-full">
         <ArrowUp size={18} />
       </Button>
-    </div>
+    </form>
   )
 }
 
-/** Compact pet header used once the chat is going (IG05 chatting, IG06). */
-export function PetChip({ details }: { details: string }) {
+// Minimal typing for the Web Speech API (Chrome, Edge, Safari; not Firefox).
+type SpeechResultList = ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }>
+interface SpeechRec {
+  lang: string
+  interimResults: boolean
+  continuous: boolean
+  onresult: ((e: { results: SpeechResultList }) => void) | null
+  onerror: ((e: { error: string }) => void) | null
+  onend: (() => void) | null
+  start(): void
+  stop(): void
+  abort(): void
+}
+type SpeechCtor = new () => SpeechRec
+
+function speechCtor(): SpeechCtor | undefined {
+  const w = window as unknown as { SpeechRecognition?: SpeechCtor; webkitSpeechRecognition?: SpeechCtor }
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition
+}
+
+/** Browser speech-to-text. Calls onText with the words heard so far while the person talks. */
+export function useSpeechInput({ onText, onError }: { onText: (text: string) => void; onError: (message: string) => void }) {
+  const [listening, setListening] = useState(false)
+  const rec = useRef<SpeechRec | null>(null)
+  const handlers = useRef({ onText, onError })
+  handlers.current = { onText, onError }
+
+  useEffect(() => () => rec.current?.abort(), [])
+
+  const start = useCallback(() => {
+    const Ctor = speechCtor()
+    if (!Ctor) {
+      handlers.current.onError("Voice input isn't supported in this browser. Try Chrome, Edge or Safari.")
+      return
+    }
+    const r = new Ctor()
+    r.lang = navigator.language || "en-US"
+    r.interimResults = true
+    r.continuous = false
+    r.onresult = (e) => {
+      let text = ""
+      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript
+      handlers.current.onText(text.trim())
+    }
+    r.onerror = (e) => {
+      if (e.error === "aborted" || e.error === "no-speech") return
+      handlers.current.onError(
+        e.error === "not-allowed" || e.error === "service-not-allowed"
+          ? "Allow microphone access to use voice input."
+          : "Voice input stopped. Try again.",
+      )
+    }
+    r.onend = () => {
+      setListening(false)
+      rec.current = null
+    }
+    rec.current = r
+    try {
+      r.start()
+      setListening(true)
+    } catch {
+      handlers.current.onError("Voice input couldn't start. Try again.")
+    }
+  }, [])
+
+  const stop = useCallback(() => {
+    rec.current?.stop()
+  }, [])
+
+  return { listening, start, stop }
+}
+
+/** Compact pet header used once the chat is going (IG05 chatting, IG06). Shows the photo, name and details Lucy confirmed. */
+export function PetChip() {
+  const [pet] = useFlowState(SLUG, defaults)
+  const photo = photoOf(pet)
+  const name = nameOf(pet)
   return (
     <div
       style={{
@@ -148,24 +268,24 @@ export function PetChip({ details }: { details: string }) {
       }}
     >
       <Photo
-        name="waffles-snow.jpg"
-        alt="Photo of Waffles"
+        name={photo.name}
+        alt={`Photo of ${name}`}
         style={{
           display: "block",
           width: 44,
           height: 44,
           borderRadius: 9999,
           objectFit: "cover",
-          objectPosition: "50% 28%",
+          objectPosition: photo.pos,
           boxShadow: "0 0 0 3px var(--card)",
         }}
       />
       <span style={{ display: "flex", flexDirection: "column", gap: sp(0.25) }}>
         <span className="body" style={{ fontWeight: 700, color: "var(--surface-brand)" }}>
-          Waffles
+          {name}
         </span>
         <span className="small" style={{ color: "var(--muted-foreground)" }}>
-          {details}
+          {detailsLine(pet, false)}
         </span>
       </span>
     </div>
