@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useFlowState } from "@/app/flow-kit"
 import { ApScreen, HeroBar, Photo, SLUG, heroTop, sp, url } from "../parts"
-import { defaults } from "../state"
+import { defaults, photoOf } from "../state"
 
 type Field = "species" | "breed" | "age" | "weight" | "place"
 const defs: { id: Field; icon: LucideIcon; label: string; conf: "sure" | "guess"; options: string[] }[] = [
@@ -25,16 +25,20 @@ export default function Confirm() {
   const [ok, setOk] = useState<Partial<Record<Field, boolean>>>({})
   const [nameTag, setNameTag] = useState(!!pet.petName)
   const nameTimer = useRef<number | undefined>(undefined)
+  const nameInput = useRef<HTMLInputElement>(null)
   useEffect(() => () => window.clearTimeout(nameTimer.current), [])
 
-  // Prototype shortcut from the artboard: tapping the empty name field fills in "Waffles".
+  // Prototype shortcut from the artboard: tapping the empty name field suggests "Waffles".
+  // The suggestion is selected, so typing straight away replaces it with another name.
   const fillName = () => {
     if (pet.petName) return
     setPet({ petName: "Waffles" })
+    window.setTimeout(() => nameInput.current?.select(), 0)
     window.clearTimeout(nameTimer.current)
     nameTimer.current = window.setTimeout(() => setNameTag(true), 450)
   }
   const ready = !!pet.petName.trim()
+  const photo = photoOf(pet)
 
   return (
     <ApScreen>
@@ -53,9 +57,9 @@ export default function Confirm() {
             }}
           >
             <Photo
-              name="waffles-snow.jpg"
+              name={photo.name}
               alt=""
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 28%" }}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: photo.pos }}
             />
           </span>
         </div>
@@ -74,6 +78,7 @@ export default function Confirm() {
             <Label htmlFor="ig03-name">Their name</Label>
             <Input
               id="ig03-name"
+              ref={nameInput}
               value={pet.petName}
               placeholder="Tap to add their name"
               aria-label="Pet name"

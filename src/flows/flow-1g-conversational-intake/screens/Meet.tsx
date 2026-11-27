@@ -1,19 +1,18 @@
 // IG01 · Meet your pet: add a photo
-import { useRef, useState } from "react"
+import { useRef } from "react"
 import { Link } from "react-router"
 import { ArrowRight, Camera, Check, Images, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/app/flow-kit"
-import { ApScreen, HeroBar, Photo, heroTop, sp, url } from "../parts"
+import { useFlowState, useToast } from "@/app/flow-kit"
+import { ApScreen, HeroBar, Photo, SLUG, heroTop, sp, url } from "../parts"
+import { PHOTOS, defaults } from "../state"
 
-const pics = [
-  { name: "waffles-snow.jpg", pos: "50% 30%", label: "Golden Retriever puppy sitting in the snow" },
-  { name: "waffles-sun.jpg", pos: "70% 82%", label: "Golden Retriever puppy asleep in a patch of sun on a wood floor" },
-  { name: "waffles-paws.jpg", pos: "50% 62%", label: "Golden Retriever puppy resting its head on its paws" },
-]
+// IG01 thumbnails crop the snow photo slightly higher than the avatars do
+const pics = PHOTOS.map((p, i) => (i === 0 ? { ...p, pos: "50% 30%" } : p))
 
 export default function Meet() {
-  const [sel, setSel] = useState(0)
+  const [pet, setPet] = useFlowState(SLUG, defaults)
+  const sel = Math.max(0, pics.findIndex((p) => p.name === pet.photo))
   const toast = useToast()
   const cameraRef = useRef<HTMLInputElement>(null)
   const libraryRef = useRef<HTMLInputElement>(null)
@@ -94,7 +93,7 @@ export default function Meet() {
                     role="radio"
                     aria-checked={on}
                     aria-label={`Photo ${i + 1}: ${p.label}`}
-                    onClick={() => setSel(i)}
+                    onClick={() => setPet({ photo: p.name })}
                     className="ap-lift"
                     style={{
                       position: "relative",

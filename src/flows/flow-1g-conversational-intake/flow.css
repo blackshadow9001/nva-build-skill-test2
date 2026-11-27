@@ -166,3 +166,13 @@
   .ig-typing i{display:block;width:6px;height:6px;border-radius:9999px;background:var(--muted-foreground);animation:f1g-igdot-ig06 1s ease-in-out infinite}
 }
 @keyframes f1g-igdot-ig06{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+
+/* Chat composer: real text field and live voice input (added in the prototype, not on the canvas) */
+.flow-flow-1g-conversational-intake {
+  .ig-ask:focus-within{box-shadow:0 0 0 2px var(--ring)}
+  .ig-input{flex-grow:1;min-width:0;height:100%;border:0;background:transparent;color:var(--foreground);font:inherit;font-size:16px;outline:none}
+  .ig-input::placeholder{color:var(--muted-foreground)}
+  .ig-listening{animation:f1g-listen 1.4s ease-in-out infinite}
+  @media (prefers-reduced-motion: reduce){.ig-listening{animation:none}}
+}
+@keyframes f1g-listen{0%,100%{box-shadow:0 0 0 0 color-mix(in oklch, var(--primary) 45%, transparent)}50%{box-shadow:0 0 0 6px color-mix(in oklch, var(--primary) 0%, transparent)}}
