@@ -1,0 +1,32 @@
+{
+  "canvas": "https://claude.ai/artifact/54HXvKKk6bPw6YFKucE2mq",
+  "canvasTitle": "NVA 2103 - Waffles 2.0 Sandbox",
+  "canvasVersion": "1795803706-1921",
+  "page": "page-1 (Stage 1: Vet Finder), note flow1g",
+  "designSystem": {
+    "title": "Syrup Design System",
+    "artifact": "https://claude.ai/artifact/BFdXEankwERQdjSHcyrUZ8",
+    "version": "1795630042-f866",
+    "shadcnStyle": "base-vega"
+  },
+  "exportedAt": "2026-11-27T00:00:00Z",
+  "artboards": {
+    "IG00": { "file": "IG00-Home.dc.html", "sha256": "28d96cde7a83cebab2e13f780f9679b73e59e5605cfd3d8650c8bcbbc5c25bb9" },
+    "IG01": { "file": "IG01-Meet.dc.html", "sha256": "928c16ec075b110d96e89ba7097df57378f6990987589a6318c85ac35be41516" },
+    "IG02": { "file": "IG02-Reading.dc.html", "sha256": "3d878f8e02a13a0ac87e4db898ba44ee38edb98b6048dc264620f15d398326de" },
+    "IG03": { "file": "IG03-Confirm.dc.html", "sha256": "76070484ee15007aed58c86046fb781e09f2b4d91523c6be8cd29f07d3fea440" },
+    "IG05": { "file": "IG05-Chat.dc.html", "sha256": "be0276132034e2a8cd6740d260460457e55de5c3ac54ab3b8e23a974f2c6447c" },
+    "IG06": { "file": "IG06-Booked.dc.html", "sha256": "6e27c84c65d9420ce211ba9169366b3d0fff103f29c308c2fefbcb29a8d7917a" }
+  },
+  "tweaks": {
+    "chat": { "screen": "IG05", "canvasProp": "chatStyle", "values": { "step": "Step by step (default)", "all": "All in one" } },
+    "conversation": { "screen": "IG05", "canvasProp": "conversation", "values": { "start": "Start (default)", "sent": "Sent" } }
+  },
+  "assets": {
+    "home-hero.webp": { "blob": "792143890ca2a90a871bdb080d48b574", "alt": "A smiling ACME team member holds a scruffy gray dog on a city sidewalk" },
+    "waffles-snow.jpg": { "blob": "ebe71e8ed7a8651fc9f975773ebc04bd", "alt": "Golden Retriever puppy sitting in the snow" },
+    "waffles-sun.jpg": { "blob": "aff0110415a6e16cb1e6524ab016de1c", "alt": "Golden Retriever puppy asleep in a patch of sun on a wood floor" },
+    "waffles-paws.jpg": { "blob": "c87be68f272edee4c5a5905de5279475", "alt": "Golden Retriever puppy resting its head on its paws" }
+  },
+  "missingAssets": []
+}
